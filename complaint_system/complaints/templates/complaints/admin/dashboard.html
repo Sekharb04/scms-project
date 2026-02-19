@@ -1,0 +1,279 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Admin Dashboard - SCMS{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard Overview</h2>
+        <small class="text-muted">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</small>
+    </div>
+</div>
+
+<!-- Main Stats -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h2 class="mb-0">{{ total_complaints }}</h2>
+                <small>Total Complaints</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h2 class="mb-0">{{ pending }}</h2>
+                <small>Pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h2 class="mb-0">{{ in_progress }}</h2>
+                <small>In Progress</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h2 class="mb-0">{{ resolved }}</h2>
+                <small>Resolved</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h2 class="mb-0">{{ escalated }}</h2>
+                <small>Escalated</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-dark text-white">
+            <div class="card-body text-center">
+                <h2 class="mb-0">{{ sla_breached }}</h2>
+                <small>SLA Breached</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Stats -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="text-primary mb-0">{{ total_students }}</h5>
+                        <small class="text-muted">Registered Students</small>
+                    </div>
+                    <i class="bi bi-mortarboard fs-1 text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="text-success mb-0">{{ total_staff }}</h5>
+                        <small class="text-muted">Staff Members</small>
+                    </div>
+                    <i class="bi bi-person-badge fs-1 text-success opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="text-danger mb-0">{{ overdue }}</h5>
+                        <small class="text-muted">Overdue Complaints</small>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 text-danger opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Complaints -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Complaints</h6>
+                <a href="{% url 'complaints:admin_all_complaints' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Student</th>
+                                <th>Staff</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for complaint in recent_complaints %}
+                                <tr>
+                                    <td><strong>{{ complaint.id }}</strong></td>
+                                    <td>{{ complaint.title|truncatewords:5 }}</td>
+                                    <td>{{ complaint.student.username }}</td>
+                                    <td>{{ complaint.assigned_staff.username|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge {{ complaint.status_badge_class }}">
+                                            {{ complaint.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ complaint.created_at|date:"M d" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        No complaints yet
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Distribution -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Complaints by Priority</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="p-3 bg-secondary bg-opacity-10 rounded">
+                            <h3 class="text-secondary mb-0">{{ priority_stats.low }}</h3>
+                            <small>Low</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-3 bg-info bg-opacity-10 rounded">
+                            <h3 class="text-info mb-0">{{ priority_stats.medium }}</h3>
+                            <small>Medium</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-3 bg-warning bg-opacity-10 rounded">
+                            <h3 class="text-warning mb-0">{{ priority_stats.high }}</h3>
+                            <small>High</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-3 bg-danger bg-opacity-10 rounded">
+                            <h3 class="text-danger mb-0">{{ priority_stats.urgent }}</h3>
+                            <small>Urgent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Staff Performance -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-trophy me-2"></i>Top Performers</h6>
+            </div>
+            <div class="card-body">
+                {% if staff_stats %}
+                    <ul class="list-unstyled mb-0">
+                        {% for staff in staff_stats %}
+                            <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>{{ staff.get_full_name|default:staff.username }}</strong>
+                                    <small class="text-muted d-block">{{ staff.assigned_count }} assigned</small>
+                                </div>
+                                <span class="badge bg-success">{{ staff.resolved_count }} resolved</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No staff data available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'complaints:admin_all_complaints' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-list-ul me-1"></i>All Complaints
+                    </a>
+                    <a href="{% url 'complaints:admin_escalations' %}" class="btn btn-outline-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i>View Escalations
+                    </a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-dark" target="_blank">
+                        <i class="bi bi-database me-1"></i>Django Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-heart-pulse me-2"></i>System Health</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Resolution Rate</span>
+                    <span class="badge bg-success">
+                        {% if total_complaints > 0 %}
+                            {{ resolved|floatformat:0 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {% if total_complaints > 0 %}{{ resolved|floatformat:0 }}{% else %}0{% endif %}%"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>SLA Compliance</span>
+                    <span class="badge {% if sla_breached > 5 %}bg-danger{% else %}bg-success{% endif %}">
+                        {% if total_complaints > 0 %}
+                            {% widthratio sla_breached total_complaints 100 as breach_rate %}
+                            {{ 100|add:breach_rate|floatformat:0 }}%
+                        {% else %}
+                            100%
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {% if total_complaints > 0 %}{% widthratio resolved total_complaints 100 %}{% else %}100{% endif %}%"></div>
+                    <div class="progress-bar bg-danger" role="progressbar" 
+                         style="width: {% if total_complaints > 0 %}{% widthratio sla_breached total_complaints 100 %}{% else %}0{% endif %}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

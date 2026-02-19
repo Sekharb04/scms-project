@@ -1,0 +1,223 @@
+{% extends 'base_staff.html' %}
+
+{% block title %}Update Complaint #{{ complaint.id }} - Staff Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Complaint Details -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>Complaint #{{ complaint.id }}
+                    </h5>
+                    <span class="badge bg-light text-dark fs-6">
+                        {{ complaint.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <h4>{{ complaint.title }}</h4>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <small class="text-muted">Student</small>
+                        <p class="mb-0"><strong>{{ complaint.student.get_full_name|default:complaint.student.username }}</strong></p>
+                        <small class="text-muted">{{ complaint.student.email }}</small>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted">Priority</small>
+                        <p>
+                            <span class="badge 
+                                {% if complaint.priority == 'urgent' %}bg-danger
+                                {% elif complaint.priority == 'high' %}bg-warning text-dark
+                                {% elif complaint.priority == 'medium' %}bg-info
+                                {% else %}bg-secondary{% endif %}">
+                                {{ complaint.get_priority_display }}
+                            </span>
+                            {% if complaint.is_overdue %}
+                                <span class="badge bg-danger">SLA Breached</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted">Created</small>
+                        <p class="mb-0">{{ complaint.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <small class="text-muted">Complaint Description</small>
+                    <div class="p-3 bg-light rounded mt-1">
+                        {{ complaint.description|linebreaks }}
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Update Form -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h6 class="mb-3"><i class="bi bi-pencil-square me-2"></i>Update Complaint</h6>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.assigned_staff.id_for_label }}" class="form-label">Assigned To</label>
+                            {{ form.assigned_staff }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.solution.id_for_label }}" class="form-label">
+                            Solution / Response
+                        </label>
+                        {{ form.solution }}
+                        <small class="text-muted">Provide the solution or response for the student</small>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mb-3"><i class="bi bi-chat-dots me-2"></i>Add Comment (Optional)</h6>
+                    
+                    <div class="mb-3">
+                        {{ comment_form.content }}
+                    </div>
+                    
+                    {% if 'is_internal' in comment_form.fields %}
+                        <div class="form-check mb-3">
+                            {{ comment_form.is_internal }}
+                            <label class="form-check-label" for="{{ comment_form.is_internal.id_for_label }}">
+                                Internal Note (not visible to student)
+                            </label>
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-save me-1"></i>Save Changes
+                        </button>
+                        <a href="{% url 'complaints:staff_assigned_complaints' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Comments History -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Comments History</h6>
+            </div>
+            <div class="card-body">
+                {% if comments %}
+                    {% for comment in comments %}
+                        <div class="d-flex mb-3 {% if comment.is_internal %}bg-warning bg-opacity-10 p-2 rounded{% endif %}">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle 
+                                    {% if comment.is_internal %}bg-warning{% else %}bg-success{% endif %} 
+                                    text-white d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                                    <div>
+                                        {% if comment.is_internal %}
+                                            <span class="badge bg-warning text-dark me-2">Internal</span>
+                                        {% endif %}
+                                        <small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                                    </div>
+                                </div>
+                                <p class="mb-0">{{ comment.content }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center mb-0">No comments yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Quick Info</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <small class="text-muted">Category</small>
+                        <p class="mb-0">{{ complaint.category.name|default:"Not specified" }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <small class="text-muted">SLA Deadline</small>
+                        <p class="mb-0 {% if complaint.is_overdue %}text-danger{% endif %}">
+                            {{ complaint.sla_deadline|date:"M d, Y H:i"|default:"Not set" }}
+                            {% if complaint.is_overdue %}
+                                <i class="bi bi-exclamation-triangle text-danger"></i>
+                            {% endif %}
+                        </p>
+                    </li>
+                    <li class="mb-2">
+                        <small class="text-muted">Last Updated</small>
+                        <p class="mb-0">{{ complaint.updated_at|date:"M d, Y H:i" }}</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Student Info -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-person me-2"></i>Student Information</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <small class="text-muted">Name</small>
+                        <p class="mb-0">{{ complaint.student.get_full_name|default:complaint.student.username }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <small class="text-muted">Email</small>
+                        <p class="mb-0">{{ complaint.student.email }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <small class="text-muted">Student ID</small>
+                        <p class="mb-0">{{ complaint.student.student_id|default:"N/A" }}</p>
+                    </li>
+                    <li>
+                        <small class="text-muted">Department</small>
+                        <p class="mb-0">{{ complaint.student.department|default:"N/A" }}</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'complaints:staff_assigned_complaints' %}" class="btn btn-outline-success">
+                        <i class="bi bi-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

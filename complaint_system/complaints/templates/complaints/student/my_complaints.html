@@ -1,0 +1,186 @@
+{% extends 'base_student.html' %}
+
+{% block title %}My Complaints - SCMS{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Total</h6>
+                        <h2 class="mb-0">{{ stats.total }}</h2>
+                    </div>
+                    <i class="bi bi-list-ul fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Pending</h6>
+                        <h2 class="mb-0">{{ stats.pending }}</h2>
+                    </div>
+                    <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">In Progress</h6>
+                        <h2 class="mb-0">{{ stats.in_progress }}</h2>
+                    </div>
+                    <i class="bi bi-arrow-repeat fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Resolved</h6>
+                        <h2 class="mb-0">{{ stats.resolved }}</h2>
+                    </div>
+                    <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter and Actions -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                {{ filter_form.status }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.priority }}
+            </div>
+            <div class="col-md-4">
+                {{ filter_form.search }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Complaints List -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>My Complaints</h5>
+        <a href="{% url 'complaints:student_create_complaint' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>New Complaint
+        </a>
+    </div>
+    <div class="card-body p-0">
+        {% if complaints %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#ID</th>
+                            <th>Title</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                            <tr>
+                                <td><strong>{{ complaint.id }}</strong></td>
+                                <td>
+                                    <a href="{% url 'complaints:student_complaint_detail' complaint.pk %}" class="text-decoration-none">
+                                        {{ complaint.title|truncatewords:8 }}
+                                    </a>
+                                    {% if complaint.is_overdue %}
+                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if complaint.priority == 'urgent' %}bg-danger
+                                        {% elif complaint.priority == 'high' %}bg-warning text-dark
+                                        {% elif complaint.priority == 'medium' %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ complaint.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{ complaint.status_badge_class }}">
+                                        {{ complaint.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'complaints:student_complaint_detail' complaint.pk %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if complaints.has_other_pages %}
+                <nav class="p-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if complaints.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ complaints.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in complaints.paginator.page_range %}
+                            {% if complaints.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > complaints.number|add:'-3' and num < complaints.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if complaints.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ complaints.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-2">No complaints found.</p>
+                <a href="{% url 'complaints:student_create_complaint' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Submit Your First Complaint
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

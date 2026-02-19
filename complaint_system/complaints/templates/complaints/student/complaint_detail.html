@@ -1,0 +1,188 @@
+{% extends 'base_student.html' %}
+
+{% block title %}Complaint #{{ complaint.id }} - SCMS{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Complaint Details -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>Complaint #{{ complaint.id }}
+                    </h5>
+                    <span class="badge {{ complaint.status_badge_class }} fs-6">
+                        {{ complaint.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">{{ complaint.title }}</h4>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <small class="text-muted">Priority</small>
+                        <p>
+                            <span class="badge 
+                                {% if complaint.priority == 'urgent' %}bg-danger
+                                {% elif complaint.priority == 'high' %}bg-warning text-dark
+                                {% elif complaint.priority == 'medium' %}bg-info
+                                {% else %}bg-secondary{% endif %}">
+                                {{ complaint.get_priority_display }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted">Category</small>
+                        <p>{{ complaint.category.name|default:"Not specified" }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted">Description</small>
+                    <div class="p-3 bg-light rounded mt-1">
+                        {{ complaint.description|linebreaks }}
+                    </div>
+                </div>
+
+                {% if complaint.solution %}
+                    <div class="mb-3">
+                        <small class="text-muted">Solution</small>
+                        <div class="p-3 bg-success bg-opacity-10 border border-success rounded mt-1">
+                            {{ complaint.solution|linebreaks }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <div class="row text-muted small">
+                    <div class="col-sm-4">
+                        <i class="bi bi-calendar me-1"></i>
+                        Created: {{ complaint.created_at|date:"M d, Y H:i" }}
+                    </div>
+                    <div class="col-sm-4">
+                        <i class="bi bi-arrow-repeat me-1"></i>
+                        Updated: {{ complaint.updated_at|date:"M d, Y H:i" }}
+                    </div>
+                    {% if complaint.resolved_at %}
+                        <div class="col-sm-4">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Resolved: {{ complaint.resolved_at|date:"M d, Y H:i" }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Comments & Updates</h6>
+            </div>
+            <div class="card-body">
+                {% if comments %}
+                    <div class="timeline">
+                        {% for comment in comments %}
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                         style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="bg-light p-3 rounded">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                                            <small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                                        </div>
+                                        <p class="mb-0">{{ comment.content }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">No comments yet.</p>
+                {% endif %}
+
+                <hr>
+
+                <!-- Add Comment Form -->
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ comment_form.content }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i>Add Comment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Status Timeline -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Status Timeline</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex align-items-center mb-3">
+                        <span class="badge bg-success rounded-circle p-2 me-2">
+                            <i class="bi bi-check"></i>
+                        </span>
+                        <div>
+                            <small class="text-muted d-block">Submitted</small>
+                            <span>{{ complaint.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </li>
+                    {% if complaint.assigned_staff %}
+                        <li class="d-flex align-items-center mb-3">
+                            <span class="badge bg-info rounded-circle p-2 me-2">
+                                <i class="bi bi-person-check"></i>
+                            </span>
+                            <div>
+                                <small class="text-muted d-block">Assigned to</small>
+                                <span>{{ complaint.assigned_staff.get_full_name|default:complaint.assigned_staff.username }}</span>
+                            </div>
+                        </li>
+                    {% endif %}
+                    {% if complaint.status == 'resolved' or complaint.status == 'closed' %}
+                        <li class="d-flex align-items-center">
+                            <span class="badge bg-success rounded-circle p-2 me-2">
+                                <i class="bi bi-check-all"></i>
+                            </span>
+                            <div>
+                                <small class="text-muted d-block">Resolved</small>
+                                <span>{{ complaint.resolved_at|date:"M d, Y"|default:"—" }}</span>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'complaints:student_my_complaints' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to List
+                    </a>
+                    <a href="{% url 'complaints:student_create_complaint' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>New Complaint
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

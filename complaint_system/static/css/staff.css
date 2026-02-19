@@ -1,0 +1,111 @@
+/* Staff Portal Styles */
+
+/* Custom animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+    border: none;
+    border-radius: 10px;
+}
+
+/* Navbar - Green theme */
+.navbar-dark.bg-success {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%) !important;
+}
+
+/* Status badges */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+/* Table styling */
+.table-hover tbody tr:hover {
+    background-color: rgba(25, 135, 84, 0.05);
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+/* Form styling */
+.form-control:focus,
+.form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+}
+
+/* Button transitions */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #157347 0%, #146c43 100%);
+}
+
+/* Stats cards */
+.card.bg-success {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%) !important;
+}
+
+/* Alert styling */
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+/* Card headers */
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 500;
+}
+
+/* Internal comments highlight */
+.bg-warning.bg-opacity-10 {
+    border-left: 3px solid #ffc107;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* SLA indicators */
+.sla-ok {
+    color: #198754;
+}
+
+.sla-warning {
+    color: #ffc107;
+}
+
+.sla-breach {
+    color: #dc3545;
+}
+
+/* Print styles */
+@media print {
+    .navbar, .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+}

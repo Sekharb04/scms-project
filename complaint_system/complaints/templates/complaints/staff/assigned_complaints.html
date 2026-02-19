@@ -1,0 +1,210 @@
+{% extends 'base_staff.html' %}
+
+{% block title %}Assigned Complaints - Staff Portal{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Assigned</h6>
+                        <h2 class="mb-0">{{ stats.assigned }}</h2>
+                    </div>
+                    <i class="bi bi-inbox-fill fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">In Progress</h6>
+                        <h2 class="mb-0">{{ stats.in_progress }}</h2>
+                    </div>
+                    <i class="bi bi-arrow-repeat fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Resolved Today</h6>
+                        <h2 class="mb-0">{{ stats.resolved_today }}</h2>
+                    </div>
+                    <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Overdue</h6>
+                        <h2 class="mb-0">{{ stats.overdue }}</h2>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unassigned Complaints Alert -->
+{% if unassigned %}
+    <div class="alert alert-warning shadow-sm mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-bell-fill me-2"></i>
+                <strong>{{ unassigned|length }} unassigned complaint(s)</strong> waiting to be claimed.
+            </div>
+        </div>
+        <div class="mt-3">
+            {% for complaint in unassigned %}
+                <div class="d-flex justify-content-between align-items-center bg-white p-2 rounded mb-2">
+                    <span>
+                        <strong>#{{ complaint.id }}</strong> - {{ complaint.title|truncatewords:6 }}
+                        <span class="badge 
+                            {% if complaint.priority == 'urgent' %}bg-danger
+                            {% elif complaint.priority == 'high' %}bg-warning text-dark
+                            {% else %}bg-secondary{% endif %} ms-2">
+                            {{ complaint.get_priority_display }}
+                        </span>
+                    </span>
+                    <a href="{% url 'complaints:staff_claim_complaint' complaint.pk %}" class="btn btn-sm btn-success">
+                        <i class="bi bi-hand-index me-1"></i>Claim
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                {{ filter_form.status }}
+            </div>
+            <div class="col-md-3">
+                {{ filter_form.priority }}
+            </div>
+            <div class="col-md-4">
+                {{ filter_form.search }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Assigned Complaints List -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-inbox me-2"></i>My Assigned Complaints</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if complaints %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#ID</th>
+                            <th>Title</th>
+                            <th>Student</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                            <tr {% if complaint.is_overdue %}class="table-danger"{% endif %}>
+                                <td><strong>{{ complaint.id }}</strong></td>
+                                <td>
+                                    {{ complaint.title|truncatewords:6 }}
+                                    {% if complaint.is_overdue %}
+                                        <span class="badge bg-danger ms-1">SLA Breach</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ complaint.student.get_full_name|default:complaint.student.username }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if complaint.priority == 'urgent' %}bg-danger
+                                        {% elif complaint.priority == 'high' %}bg-warning text-dark
+                                        {% elif complaint.priority == 'medium' %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ complaint.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{ complaint.status_badge_class }}">
+                                        {{ complaint.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ complaint.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'complaints:staff_update_complaint' complaint.pk %}" 
+                                       class="btn btn-success btn-sm">
+                                        <i class="bi bi-pencil"></i> Update
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if complaints.has_other_pages %}
+                <nav class="p-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if complaints.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ complaints.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in complaints.paginator.page_range %}
+                            {% if complaints.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > complaints.number|add:'-3' and num < complaints.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if complaints.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ complaints.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-2">No complaints assigned to you yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

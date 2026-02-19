@@ -1,0 +1,166 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Escalations - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Escalations Management</h2>
+        <small class="text-muted">Monitor and manage escalated complaints</small>
+    </div>
+</div>
+
+<!-- Active Escalations -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="bi bi-bell-fill me-2"></i>Active Escalations ({{ escalations|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if escalations %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Escalation #</th>
+                            <th>Complaint</th>
+                            <th>Reason</th>
+                            <th>Escalated By</th>
+                            <th>Created</th>
+                            <th>Notes</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for escalation in escalations %}
+                            <tr>
+                                <td><strong>#{{ escalation.id }}</strong></td>
+                                <td>
+                                    <a href="#" class="text-decoration-none">
+                                        #{{ escalation.complaint.id }} - {{ escalation.complaint.title|truncatewords:5 }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">{{ escalation.get_reason_display }}</span>
+                                </td>
+                                <td>{{ escalation.escalated_by.username|default:"System" }}</td>
+                                <td>{{ escalation.created_at|date:"M d, Y H:i" }}</td>
+                                <td>{{ escalation.notes|truncatewords:10|default:"-" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" 
+                                            data-bs-target="#resolveModal{{ escalation.id }}">
+                                        <i class="bi bi-check"></i> Resolve
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-check-circle fs-1 text-success"></i>
+                <p class="text-muted mt-2">No active escalations. All issues are under control!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Overdue Complaints (Auto-Escalation Candidates) -->
+{% if overdue_complaints %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Overdue Complaints ({{ overdue_complaints|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Student</th>
+                            <th>Assigned To</th>
+                            <th>SLA Deadline</th>
+                            <th>Days Overdue</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in overdue_complaints %}
+                            <tr class="table-warning">
+                                <td><strong>{{ complaint.id }}</strong></td>
+                                <td>{{ complaint.title|truncatewords:5 }}</td>
+                                <td>{{ complaint.student.username }}</td>
+                                <td>{{ complaint.assigned_staff.username|default:"Unassigned" }}</td>
+                                <td>{{ complaint.sla_deadline|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-danger">
+                                        {{ complaint.sla_deadline|timesince }} overdue
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'complaints:admin_escalate_complaint' complaint.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="reason" value="sla_breach">
+                                        <input type="hidden" name="notes" value="Auto-escalated due to SLA breach">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-arrow-up-circle"></i> Escalate
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Resolved Escalations History -->
+<div class="card shadow-sm">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Resolved Escalations</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if resolved_escalations %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Complaint</th>
+                            <th>Reason</th>
+                            <th>Escalated</th>
+                            <th>Resolved</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for escalation in resolved_escalations %}
+                            <tr>
+                                <td>{{ escalation.id }}</td>
+                                <td>#{{ escalation.complaint.id }} - {{ escalation.complaint.title|truncatewords:4 }}</td>
+                                <td><span class="badge bg-secondary">{{ escalation.get_reason_display }}</span></td>
+                                <td>{{ escalation.created_at|date:"M d, Y" }}</td>
+                                <td>{{ escalation.resolved_at|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if escalation.resolved_at %}
+                                        {{ escalation.created_at|timesince:escalation.resolved_at }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted mb-0">No resolved escalations history</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
