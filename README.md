@@ -15,6 +15,28 @@ Designed to improve transparency, accountability, and response time between stud
 
 ---
 
+## 📸 Application Screenshots
+
+### System Portal
+
+![System Portal](complaint_system/img/system%20portal.png)
+
+### Role Management
+
+![Roles](complaint_system/img/roles.png)
+
+### Admin Dashboard
+
+![Admin Dashboard](complaint_system/img/admin%20dashboard.png)
+
+### Staff Dashboard
+
+![Staff Dashboard](complaint_system/img/staff%20dashboard.png)
+
+### Submit Complaint
+
+![Submit Complaint](complaint_system/img/submit%20complaint.png)
+
 ## Tech Stack
 - **Backend:** Django (Python)
 - **Database:** SQLite
